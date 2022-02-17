@@ -86,7 +86,7 @@
 <meta property="og:site_name" content="LittleCai的小屋">
 <meta property="og:description" content="命令 jstack：查看jvm线程运行状态，是否有死锁现象等等信息。 jinfo:可以输出并修改运行时的java 进程的opts。  jps:与unix上的ps类似，用来显示本地的java进程，可以查看本地运行着几个java程序，并显示他们的进程号。  jstat：一个极强的监视VM内存工具。可以用来监视VM内存内的各种堆和非堆的大小及其内存使用量。  jmap：打印出某个java进程（使用pid">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2022-02-17T13:24:13.883Z">
+<meta property="og:updated_time" content="2022-02-17T13:56:00.187Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="JVM查看命令">
 <meta name="twitter:description" content="命令 jstack：查看jvm线程运行状态，是否有死锁现象等等信息。 jinfo:可以输出并修改运行时的java 进程的opts。  jps:与unix上的ps类似，用来显示本地的java进程，可以查看本地运行着几个java程序，并显示他们的进程号。  jstat：一个极强的监视VM内存工具。可以用来监视VM内存内的各种堆和非堆的大小及其内存使用量。  jmap：打印出某个java进程（使用pid">
@@ -375,14 +375,11 @@
 <li>jstat -util pid:统计gc信息统计。 </li>
 <li>jstat -printcompilation pid:当前VM执行的信息。 除了以上一个参数外，还可以同时加上 两个数字，如：jstat -printcompilation 3024 250 6是每250毫秒打印一次，一共打印6次，还可以加上-h3每三行显示一下标题。 </li>
 </ul>
-<p>jmap是一个可以输出所有内存中对象的工具，甚至可以将VM 中的heap，以二进制输出成文本。<br>命令：jmap -dump:format=b,file=heap.bin \&lt;pid></p>
-<blockquote>
-<p>file：保存路径及文件名<br>pid：进程编号 </p>
+<p>jmap是一个可以输出所有内存中对象的工具，甚至可以将VM 中的heap，以二进制输出成文本。<br>命令：jmap -dump:format=b,file=heap.bin \&lt;pid>  （file：保存路径及文件名  pid：进程编号 ）</p>
 <ul>
 <li>jmap -histo:live pid| less：堆中活动的对象以及大小 。</li>
 <li>jmap -heap pid：查看堆的使用状况信息。</li>
 </ul>
-</blockquote>
 <p>jinfo：的用处比较简单，就是能输出并修改运行时的java进程的运行参数。用法是jinfo -opt pid 如：查看2788的MaxPerm大小可以用 jinfo -flag MaxPermSize 2788。 </p>
 <p>JConsole是一个用java写的GUI程序，用来监控VM，并可监控远程的VM，非常易用，而且功能非常强。使用方法：命令行里打 jconsole，选则进程就可以了。 </p>
 <p>JConsole中关于内存分区的说明：</p>
