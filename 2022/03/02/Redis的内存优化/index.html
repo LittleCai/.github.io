@@ -98,7 +98,7 @@
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_8e48faac_2a3e_51f4_d602_1fb45a002892_1.png">
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_5417a9b7_6050_0614_09f1_ce8565f04eca_1.png">
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_d48315af_6789_08d6_823d_beec6378e7da_1.png">
-<meta property="og:updated_time" content="2022-03-02T07:56:50.264Z">
+<meta property="og:updated_time" content="2022-03-02T08:15:56.710Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis的内存优化">
 <meta name="twitter:description" content="文章转载自CacheCloud Redis所有的数据都在内存中，而内存又是非常宝贵的资源。对于如何优化内存使用一直是Redis用户非常关注的问题。本文让我们深入到Redis细节中，学习内存优化的技巧。分为如下几个部分： 一. redisObject对象二. 缩减键值对象三. 共享对象池四. 字符串优化五. 编码优化六. 控制key的数量 一. redisObject对象Redis存储的所有值对象在">
@@ -446,7 +446,8 @@
 <li>惰性删除机制，字符串缩减后的空间不释放，作为预分配空间保留。</li>
 </ul>
 <h3 id="2-预分配机制"><a href="#2-预分配机制" class="headerlink" title="2.预分配机制"></a>2.预分配机制</h3><p>因为字符串(SDS)存在预分配机制，日常开发中要小心预分配带来的内存浪费，例如下表的测试用例。</p>
-<h4 id="表：字符串内存预分配测试"><a href="#表：字符串内存预分配测试" class="headerlink" title="表：字符串内存预分配测试"></a>表：字符串内存预分配测试</h4><table>
+<p><strong>表：字符串内存预分配测试</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">阶段</th>
@@ -511,7 +512,8 @@
 <h3 id="3-字符串重构"><a href="#3-字符串重构" class="headerlink" title="3.字符串重构"></a>3.字符串重构</h3><p>字符串重构:指不一定把每份数据作为字符串整体存储，像json这样的数据可以使用hash结构，使用二级结构存储也能帮我们节省内存。同时可以使用hmget,hmset命令支持字段的部分读取修改，而不用每次整体存取。例如下面的json数据：</p>
 <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">"vid"</span>: <span class="string">"413368768"</span>,</span><br><span class="line">    <span class="attr">"title"</span>: <span class="string">"搜狐屌丝男士"</span>,</span><br><span class="line">    <span class="attr">"videoAlbumPic"</span>: <span class="string">"http://photocdn.sohu.com/60160518/vrsa_ver8400079_ae433_pic26.jpg"</span>,</span><br><span class="line">    <span class="attr">"pid"</span>: <span class="string">"6494271"</span>,</span><br><span class="line">    <span class="attr">"type"</span>: <span class="string">"1024"</span>,</span><br><span class="line">    <span class="attr">"playlist"</span>: <span class="string">"6494271"</span>,</span><br><span class="line">    <span class="attr">"playTime"</span>: <span class="string">"468"</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>分别使用字符串和hash结构测试内存表现，如下表所示。</p>
-<h4 id="表：测试内存表现"><a href="#表：测试内存表现" class="headerlink" title="表：测试内存表现"></a>表：测试内存表现</h4><table>
+<p><strong>表：测试内存表现</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">数据量</th>
@@ -553,7 +555,8 @@
 <h2 id="五-编码优化"><a href="#五-编码优化" class="headerlink" title="五. 编码优化"></a>五. 编码优化</h2><h3 id="1-了解编码"><a href="#1-了解编码" class="headerlink" title="1.了解编码"></a>1.了解编码</h3><p>Redis对外提供了string,list,hash,set,zet等类型，但是Redis内部针对不同类型存在编码的概念，所谓编码就是具体使用哪种底层数据结构来实现。编码不同将直接影响数据的内存占用和读写效率。使用object encoding {key}命令获取编码类型。如下:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">redis&gt;</span><span class="bash"> <span class="built_in">set</span> str:1 hello</span></span><br><span class="line">OK</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding str:1</span></span><br><span class="line">"embstr" // embstr编码字符串</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> lpush list:1 1 2 3</span></span><br><span class="line">(integer) 3</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding list:1</span></span><br><span class="line">"ziplist" // ziplist编码列表</span><br></pre></td></tr></table></figure>
 <p>Redis针对每种数据类型(type)可以采用至少两种编码方式来实现，下表表示type和encoding的对应关系。</p>
-<h4 id="表：type和encoding对应关系表"><a href="#表：type和encoding对应关系表" class="headerlink" title="表：type和encoding对应关系表"></a>表：type和encoding对应关系表</h4><table>
+<p><strong>表：type和encoding对应关系表</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">类型</th>
@@ -593,7 +596,8 @@
 <h3 id="2-控制编码类型"><a href="#2-控制编码类型" class="headerlink" title="2.控制编码类型"></a>2.控制编码类型</h3><p>编码类型转换在Redis写入数据时自动完成，这个转换过程是不可逆的，转换规则只能从小内存编码向大内存编码转换。例如：</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">redis&gt;</span><span class="bash"> lpush list:1 a b c d</span></span><br><span class="line">(integer) 4 //存储4个元素</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding list:1</span></span><br><span class="line">"ziplist" //采用ziplist压缩列表编码</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> config <span class="built_in">set</span> list-max-ziplist-entries 4</span></span><br><span class="line">OK //设置列表类型ziplist编码最大允许4个元素</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> lpush list:1 e</span></span><br><span class="line">(integer) 5 //写入第5个元素e</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding list:1</span></span><br><span class="line">"linkedlist" //编码类型转换为链表</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> rpop list:1</span></span><br><span class="line">"a" //弹出元素a</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> llen list:1</span></span><br><span class="line">(integer) 4 // 列表此时有4个元素</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding list:1</span></span><br><span class="line">"linkedlist" //编码类型依然为链表，未做编码回退</span><br></pre></td></tr></table></figure>
 <p>以上命令体现了list类型编码的转换过程，其中Redis之所以不支持编码回退，主要是数据增删频繁时，数据向压缩编码转换非常消耗CPU，得不偿失。以上示例用到了list-max-ziplist-entries参数，这个参数用来决定列表长度在多少范围内使用ziplist编码。当然还有其它参数控制各种数据类型的编码，如下表所示：</p>
-<h4 id="表：hash-list-set-zset内部编码配置"><a href="#表：hash-list-set-zset内部编码配置" class="headerlink" title="表：hash,list,set,zset内部编码配置"></a>表：hash,list,set,zset内部编码配置</h4><table>
+<p><strong>表：hash,list,set,zset内部编码配置</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">类型</th>
@@ -676,7 +680,8 @@
 <li>5) 适合存储小对象和长度有限的数据。</li>
 </ul>
 <p>下面通过测试展示ziplist编码在不同类型中内存和速度的表现，如下表所示。</p>
-<h4 id="表：ziplist在hash-list-zset内存和速度测试"><a href="#表：ziplist在hash-list-zset内存和速度测试" class="headerlink" title="表：ziplist在hash,list,zset内存和速度测试"></a>表：ziplist在hash,list,zset内存和速度测试</h4><table>
+<p><strong>表：ziplist在hash,list,zset内存和速度测试</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">类型</th>
@@ -688,7 +693,6 @@
 <th style="text-align:left">压缩编码内存量/平均耗时</th>
 <th style="text-align:left">内存降低比例</th>
 <th style="text-align:left">耗时增长倍数</th>
-<th></th>
 </tr>
 </thead>
 <tbody>
@@ -702,7 +706,6 @@
 <td style="text-align:left">43.83M/13.24微秒</td>
 <td style="text-align:left">57.5%</td>
 <td style="text-align:left">15倍</td>
-<td></td>
 </tr>
 <tr>
 <td style="text-align:left">list</td>
@@ -714,7 +717,6 @@
 <td style="text-align:left">39.92M/5.45微秒</td>
 <td style="text-align:left">56.8%</td>
 <td style="text-align:left">2.5倍</td>
-<td></td>
 </tr>
 <tr>
 <td style="text-align:left">zset</td>
@@ -734,7 +736,8 @@
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">127.0.0.1:6379&gt; sadd set:test 3 4 2 6 8 9 2</span><br><span class="line">(integer) 6 //乱序写入6个整数</span><br><span class="line">127.0.0.1:6379&gt; object encoding set:test</span><br><span class="line">"intset" //使用intset编码</span><br><span class="line">127.0.0.1:6379&gt; smembers set:test</span><br><span class="line">"2" "3" "4" "6" "8" "9" // 排序输出整数结合</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> config <span class="built_in">set</span> <span class="built_in">set</span>-max-intset-entries 6</span></span><br><span class="line">OK //设置intset最大允许整数长度</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> sadd <span class="built_in">set</span>:<span class="built_in">test</span> 5</span></span><br><span class="line">(integer) 1 //写入第7个整数 5</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> object encoding <span class="built_in">set</span>:<span class="built_in">test</span></span></span><br><span class="line">"hashtable" // 编码变为hashtable</span><br><span class="line"><span class="meta">redis&gt;</span><span class="bash"> smembers <span class="built_in">set</span>:<span class="built_in">test</span></span></span><br><span class="line">"8" "3" "5" "9" "4" "2" "6" //乱序输出</span><br></pre></td></tr></table></figure>
 <p>以上命令可以看出intset对写入整数进行排序，通过O(log(n))时间复杂度实现查找和去重操作，intset编码结构如下图所示。<br><a href="http://i1.itc.cn/20170216/3084_5417a9b7_6050_0614_09f1_ce8565f04eca_1.png" target="_blank" rel="noopener"><img src="http://i1.itc.cn/20170216/3084_5417a9b7_6050_0614_09f1_ce8565f04eca_1.png" alt="img"></a></p>
 <p>intset的字段结构含义：<br>1) encoding:整数表示类型，根据集合内最长整数值确定类型，整数类型划分三种:int-16，int-32，int-64。<br>2) length:表示集合元素个数。<br>3) contents:整数数组，按从小到大顺序保存。<br>intset保存的整数类型根据长度划分，当保存的整数超出当前类型时，将会触发自动升级操作且升级后不再做回退。升级操作将会导致重新申请内存空间，把原有数据按转换类型后拷贝到新数组。<br>开发提示：使用intset编码的集合时，尽量保持整数范围一致，如都在int-16范围内。防止个别大整数触发集合升级操作，产生内存浪费。<br>下面通过测试查看ziplist编码的集合内存和速度表现，如下表所示。</p>
-<h4 id="表：ziplist编码在set下内存和速度表现"><a href="#表：ziplist编码在set下内存和速度表现" class="headerlink" title="表：ziplist编码在set下内存和速度表现"></a>表：ziplist编码在set下内存和速度表现</h4><table>
+<p><strong>表：ziplist编码在set下内存和速度表现</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">数据量</th>
@@ -789,7 +792,8 @@
 <li>hash的field可用于记录原始key字符串，方便哈希查找。</li>
 <li>hash的value保存原始值对象，确保不要超过hash-max-ziplist-value限制。<br>下面测试这种优化技巧的内存表现，如下表所示。</li>
 </ul>
-<h4 id="表：hash分组控制键规模测试"><a href="#表：hash分组控制键规模测试" class="headerlink" title="表：hash分组控制键规模测试"></a>表：hash分组控制键规模测试</h4><table>
+<p><strong>表：hash分组控制键规模测试</strong></p>
+<table>
 <thead>
 <tr>
 <th style="text-align:left">数据量</th>
@@ -1072,7 +1076,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一-redisObject对象"><span class="nav-number">1.</span> <span class="nav-text">一. redisObject对象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-type字段"><span class="nav-number">1.1.</span> <span class="nav-text">1.type字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-encoding字段"><span class="nav-number">1.2.</span> <span class="nav-text">2.encoding字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-lru字段"><span class="nav-number">1.3.</span> <span class="nav-text">3.lru字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-refcount字段"><span class="nav-number">1.4.</span> <span class="nav-text">4.refcount字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-ptr字段"><span class="nav-number">1.5.</span> <span class="nav-text">5. *ptr字段:</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二-缩减键值对象"><span class="nav-number">2.</span> <span class="nav-text">二. 缩减键值对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三-共享对象池"><span class="nav-number">3.</span> <span class="nav-text">三. 共享对象池</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么开启maxmemory和LRU淘汰策略后对象池无效"><span class="nav-number">3.0.1.</span> <span class="nav-text">为什么开启maxmemory和LRU淘汰策略后对象池无效?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么只有整数对象池？"><span class="nav-number">3.0.2.</span> <span class="nav-text">为什么只有整数对象池？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四-字符串优化"><span class="nav-number">4.</span> <span class="nav-text">四. 字符串优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-字符串结构"><span class="nav-number">4.1.</span> <span class="nav-text">1.字符串结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-预分配机制"><span class="nav-number">4.2.</span> <span class="nav-text">2.预分配机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：字符串内存预分配测试"><span class="nav-number">4.2.1.</span> <span class="nav-text">表：字符串内存预分配测试</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-字符串重构"><span class="nav-number">4.3.</span> <span class="nav-text">3.字符串重构</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：测试内存表现"><span class="nav-number">4.3.1.</span> <span class="nav-text">表：测试内存表现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五-编码优化"><span class="nav-number">5.</span> <span class="nav-text">五. 编码优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-了解编码"><span class="nav-number">5.1.</span> <span class="nav-text">1.了解编码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：type和encoding对应关系表"><span class="nav-number">5.1.1.</span> <span class="nav-text">表：type和encoding对应关系表</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-控制编码类型"><span class="nav-number">5.2.</span> <span class="nav-text">2.控制编码类型</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：hash-list-set-zset内部编码配置"><span class="nav-number">5.2.1.</span> <span class="nav-text">表：hash,list,set,zset内部编码配置</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-ziplist编码"><span class="nav-number">5.3.</span> <span class="nav-text">3.ziplist编码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：ziplist在hash-list-zset内存和速度测试"><span class="nav-number">5.3.1.</span> <span class="nav-text">表：ziplist在hash,list,zset内存和速度测试</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-intset编码"><span class="nav-number">5.4.</span> <span class="nav-text">4.intset编码</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：ziplist编码在set下内存和速度表现"><span class="nav-number">5.4.1.</span> <span class="nav-text">表：ziplist编码在set下内存和速度表现</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六-控制key的数量"><span class="nav-number">6.</span> <span class="nav-text">六 控制key的数量</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#表：hash分组控制键规模测试"><span class="nav-number">6.0.1.</span> <span class="nav-text">表：hash分组控制键规模测试</span></a></li></ol></li></ol></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#一-redisObject对象"><span class="nav-number">1.</span> <span class="nav-text">一. redisObject对象</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-type字段"><span class="nav-number">1.1.</span> <span class="nav-text">1.type字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-encoding字段"><span class="nav-number">1.2.</span> <span class="nav-text">2.encoding字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-lru字段"><span class="nav-number">1.3.</span> <span class="nav-text">3.lru字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-refcount字段"><span class="nav-number">1.4.</span> <span class="nav-text">4.refcount字段:</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-ptr字段"><span class="nav-number">1.5.</span> <span class="nav-text">5. *ptr字段:</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#二-缩减键值对象"><span class="nav-number">2.</span> <span class="nav-text">二. 缩减键值对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#三-共享对象池"><span class="nav-number">3.</span> <span class="nav-text">三. 共享对象池</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么开启maxmemory和LRU淘汰策略后对象池无效"><span class="nav-number">3.0.1.</span> <span class="nav-text">为什么开启maxmemory和LRU淘汰策略后对象池无效?</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#为什么只有整数对象池？"><span class="nav-number">3.0.2.</span> <span class="nav-text">为什么只有整数对象池？</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#四-字符串优化"><span class="nav-number">4.</span> <span class="nav-text">四. 字符串优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-字符串结构"><span class="nav-number">4.1.</span> <span class="nav-text">1.字符串结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-预分配机制"><span class="nav-number">4.2.</span> <span class="nav-text">2.预分配机制</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-字符串重构"><span class="nav-number">4.3.</span> <span class="nav-text">3.字符串重构</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#五-编码优化"><span class="nav-number">5.</span> <span class="nav-text">五. 编码优化</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-了解编码"><span class="nav-number">5.1.</span> <span class="nav-text">1.了解编码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-控制编码类型"><span class="nav-number">5.2.</span> <span class="nav-text">2.控制编码类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-ziplist编码"><span class="nav-number">5.3.</span> <span class="nav-text">3.ziplist编码</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-intset编码"><span class="nav-number">5.4.</span> <span class="nav-text">4.intset编码</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#六-控制key的数量"><span class="nav-number">6.</span> <span class="nav-text">六 控制key的数量</span></a></li></ol></div>
             
 
           </div>
