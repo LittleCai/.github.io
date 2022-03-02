@@ -98,7 +98,7 @@
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_8e48faac_2a3e_51f4_d602_1fb45a002892_1.png">
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_5417a9b7_6050_0614_09f1_ce8565f04eca_1.png">
 <meta property="og:image" content="http://i1.itc.cn/20170216/3084_d48315af_6789_08d6_823d_beec6378e7da_1.png">
-<meta property="og:updated_time" content="2022-03-02T08:19:25.934Z">
+<meta property="og:updated_time" content="2022-03-02T08:24:13.386Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Redis的内存优化">
 <meta name="twitter:description" content="文章转载自CacheCloud Redis所有的数据都在内存中，而内存又是非常宝贵的资源。对于如何优化内存使用一直是Redis用户非常关注的问题。本文让我们深入到Redis细节中，学习内存优化的技巧。分为如下几个部分： 一. redisObject对象二. 缩减键值对象三. 共享对象池四. 字符串优化五. 编码优化六. 控制key的数量 一. redisObject对象Redis存储的所有值对象在">
@@ -368,7 +368,7 @@
       
         <p>文章转载自<a href="https://cachecloud.github.io/2017/02/16/Redis%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96" target="_blank" rel="noopener">CacheCloud</a></p>
 <p>Redis所有的数据都在内存中，而内存又是非常宝贵的资源。对于如何优化内存使用一直是Redis用户非常关注的问题。本文让我们深入到Redis细节中，学习内存优化的技巧。分为如下几个部分：</p>
-<p>一. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter1">redisObject对象</a><br>二. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter2">缩减键值对象</a><br>三. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter3">共享对象池</a><br>四. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter4">字符串优化</a><br>五. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter5">编码优化</a><br>六. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/?utm_source=tuicool&amp;utm_medium=referral#chapter6">控制key的数量</a></p>
+<p>一. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#一-redisObject对象">redisObject对象</a><br>二. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#二-缩减键值对象">缩减键值对象</a><br>三. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#三-共享对象池">共享对象池</a><br>四. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#四-字符串优化">字符串优化</a><br>五. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#五-编码优化">编码优化</a><br>六. <a href="https://littlecai.github.io/2022/03/02/Redis的内存优化/#六-控制key的数量">控制key的数量</a></p>
 <h2 id="一-redisObject对象"><a href="#一-redisObject对象" class="headerlink" title="一. redisObject对象"></a>一. redisObject对象</h2><p>Redis存储的所有值对象在内部定义为redisObject结构体，内部结构如下图所示。</p>
 <p><a href="http://i1.itc.cn/20170216/3084_2c3a0c00_6cbc_c4d9_01fe_8852cc497653_1.png" target="_blank" rel="noopener"><img src="http://i1.itc.cn/20170216/3084_2c3a0c00_6cbc_c4d9_01fe_8852cc497653_1.png" alt="img"></a></p>
 <p>Redis存储的数据都使用redisObject来封装，包括string,hash,list,set,zset在内的所有数据类型。理解redisObject对内存优化非常有帮助，下面针对每个字段做详细说明：</p>
