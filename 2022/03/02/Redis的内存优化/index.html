@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-Hans">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
@@ -26,7 +26,7 @@
 <meta property="og:url" content="https://littlecai.github.io/2022/03/02/Redis%E7%9A%84%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96/index.html">
 <meta property="og:site_name" content="LittleCai的小屋">
 <meta property="og:description" content="文章转载自CacheCloud Redis所有的数据都在内存中，而内存又是非常宝贵的资源。对于如何优化内存使用一直是Redis用户非常关注的问题。本文让我们深入到Redis细节中，学习内存优化的技巧。分为如下几个部分： 一. redisObject对象二. 缩减键值对象三. 共享对象池四. 字符串优化五. 编码优化六. 控制key的数量 一. redisObject对象Redis存储的所有值对象在">
-<meta property="og:locale">
+<meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://i1.itc.cn/20170216/3084_2c3a0c00_6cbc_c4d9_01fe_8852cc497653_1.png">
 <meta property="og:image" content="https://i2.itc.cn/20170216/3084_8e427aa5_bf49_c714_45f8_692fccf2cd6b_1.png">
 <meta property="og:image" content="https://i0.itc.cn/20170216/3084_ffd40aaf_b79c_0c62_9751_650a6b0ccc53_1.png">
@@ -54,7 +54,7 @@
     sidebar: "",
     isHome : false,
     isPost : true,
-    lang   : 'zh-Hans'
+    lang   : 'zh-CN'
   };
 </script>
 
@@ -98,7 +98,7 @@
     <header class="header" itemscope itemtype="http://schema.org/WPHeader">
       <div class="header-inner"><div class="site-brand-container">
   <div class="site-nav-toggle">
-    <div class="toggle" aria-label="Toggle navigation bar">
+    <div class="toggle" aria-label="切换导航栏">
       <span class="toggle-line toggle-line-first"></span>
       <span class="toggle-line toggle-line-middle"></span>
       <span class="toggle-line toggle-line-last"></span>
@@ -128,12 +128,12 @@
   <ul id="menu" class="main-menu menu">
         <li class="menu-item menu-item-home">
 
-    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>Home</a>
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
 
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>Archives</a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
 
   </li>
   </ul>
@@ -163,7 +163,7 @@
     
   
   
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-Hans">
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://littlecai.github.io/2022/03/02/Redis%E7%9A%84%E5%86%85%E5%AD%98%E4%BC%98%E5%8C%96/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -185,16 +185,16 @@
               <span class="post-meta-item-icon">
                 <i class="far fa-calendar"></i>
               </span>
-              <span class="post-meta-item-text">Posted on</span>
+              <span class="post-meta-item-text">发表于</span>
 
-              <time title="Created: 2022-03-02 15:44:46" itemprop="dateCreated datePublished" datetime="2022-03-02T15:44:46+08:00">2022-03-02</time>
+              <time title="创建时间：2022-03-02 15:44:46" itemprop="dateCreated datePublished" datetime="2022-03-02T15:44:46+08:00">2022-03-02</time>
             </span>
               <span class="post-meta-item">
                 <span class="post-meta-item-icon">
                   <i class="far fa-calendar-check"></i>
                 </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2022-03-03 16:21:34" itemprop="dateModified" datetime="2022-03-03T16:21:34+08:00">2022-03-03</time>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-03 16:21:34" itemprop="dateModified" datetime="2022-03-03T16:21:34+08:00">2022-03-03</time>
               </span>
 
           
@@ -853,10 +853,10 @@
 
       <ul class="sidebar-nav motion-element">
         <li class="sidebar-nav-toc">
-          Table of Contents
+          文章目录
         </li>
         <li class="sidebar-nav-overview">
-          Overview
+          站点概览
         </li>
       </ul>
 
@@ -877,16 +877,16 @@
           <a href="/archives/">
         
           <span class="site-state-item-count">3</span>
-          <span class="site-state-item-name">posts</span>
+          <span class="site-state-item-name">日志</span>
         </a>
       </div>
       <div class="site-state-item site-state-categories">
         <span class="site-state-item-count">1</span>
-        <span class="site-state-item-name">categories</span>
+        <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
         <span class="site-state-item-count">1</span>
-        <span class="site-state-item-name">tags</span>
+        <span class="site-state-item-name">标签</span>
       </div>
   </nav>
 </div>
@@ -918,7 +918,7 @@
   </span>
   <span class="author" itemprop="copyrightHolder">LittleCai</span>
 </div>
-  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>
 
         
