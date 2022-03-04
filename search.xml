@@ -539,7 +539,7 @@
 </tr>
 </tbody></table>
 <p>根据以上测试结果发现intset表现非常好，同样的数据内存占用只有不到hashtable编码的十分之一。intset数据结构插入命令复杂度为O(n)，查询命令为O(log(n))，由于整数占用空间非常小，所以在集合长度可控的基础上，写入命令执行速度也会非常快，因此当使用整数集合时尽量使用intset编码。上表测试第三行把ziplist-hash类型也放入其中，主要因为intset编码必须存储整数，当集合内保存非整数数据时，无法使用intset实现内存优化。这时可以使用ziplist-hash类型对象模拟集合类型，hash的field当作集合中的元素，value设置为1字节占位符即可。使用ziplist编码的hash类型依然比使用hashtable编码的集合节省大量内存。</p>
-<h2 id="六-控制key的数量"><a href="#六-控制key的数量" class="headerlink" title="六 控制key的数量"></a>六 控制key的数量</h2><p>当使用Redis存储大量数据时，通常会存在大量键，过多的键同样会消耗大量内存。Redis本质是一个数据结构服务器，它为我们提供多种数据结构，如hash，list，set，zset 等结构。使用Redis时不要进入一个误区，大量使用get&#x2F;set这样的API，把Redis当成Memcached使用。对于存储相同的数据内容利用Redis的数据结构降低外层键的数量，也可以节省大量内存。如下图所示，通过在客户端预估键规模，把大量键分组映射到多个hash结构中降低键的数量。</p>
+<h2 id="六-控制key的数量"><a href="#六-控制key的数量" class="headerlink" title="六. 控制key的数量"></a>六. 控制key的数量</h2><p>当使用Redis存储大量数据时，通常会存在大量键，过多的键同样会消耗大量内存。Redis本质是一个数据结构服务器，它为我们提供多种数据结构，如hash，list，set，zset 等结构。使用Redis时不要进入一个误区，大量使用get&#x2F;set这样的API，把Redis当成Memcached使用。对于存储相同的数据内容利用Redis的数据结构降低外层键的数量，也可以节省大量内存。如下图所示，通过在客户端预估键规模，把大量键分组映射到多个hash结构中降低键的数量。</p>
 <p><a href="https://i1.itc.cn/20170216/3084_d48315af_6789_08d6_823d_beec6378e7da_1.png"><img src="https://i1.itc.cn/20170216/3084_d48315af_6789_08d6_823d_beec6378e7da_1.png" alt="img"></a></p>
 <p>hash结构降低键数量分析：</p>
 <ul>
